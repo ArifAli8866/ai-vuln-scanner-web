@@ -32,10 +32,21 @@ export async function POST(req: Request) {
   const result = streamText({
     model: anthropic("claude-sonnet-4-6"),
     system: SYSTEM_PROMPT,
-    messages: convertToModelMessages(messages),
+    messages: await convertToModelMessages(messages),
     tools,
     stopWhen: stepCountIs(6),
   });
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse({
+    onError: (error) => {
+      console.error("AI stream error:", error);
+
+      if (error instanceof Error) {
+        return error.message;
+      }
+
+      return "The AI request failed. Please try again.";
+    },
+  });
 }
+

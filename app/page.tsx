@@ -18,7 +18,14 @@ const SUGGESTIONS = [
 export default function Page() {
   const [input, setInput] = useState("");
 
-  const { messages, sendMessage, addToolResult, status } = useChat<AppUIMessage>({
+  const {
+    messages,
+    sendMessage,
+    addToolResult,
+    regenerate,
+    error,
+    status,
+  } = useChat<AppUIMessage>({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
     // Once the user resolves a client-side tool (the confirmation card),
     // automatically continue the conversation so the model can react.
@@ -51,7 +58,11 @@ export default function Page() {
   }
 
   function handleRetry(url: string) {
-    sendMessage({ text: `Please try scanning ${url} again.` });
+    if (isBusy) return;
+
+    sendMessage({
+      text: `Please try scanning ${url} again.`,
+    });
   }
 
   return (
@@ -125,7 +136,31 @@ export default function Page() {
         ))}
 
         {status === "submitted" && (
-          <div className="text-xs text-muted animate-pulseSlow">thinking…</div>
+          <div className="text-xs text-muted animate-pulseSlow">
+            thinking…
+          </div>
+        )}
+
+        {status === "error" && error && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 space-y-3">
+            <div>
+              <p className="text-sm font-medium text-red-300">
+                Something went wrong
+              </p>
+
+              <p className="mt-1 text-xs text-gray-400">
+                {error.message || "The AI request failed. Please try again."}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => regenerate()}
+              className="rounded-md border border-red-400/30 px-3 py-1.5 text-xs text-red-200 hover:bg-red-500/10 transition"
+            >
+              Retry
+            </button>
+          </div>
         )}
       </div>
 
